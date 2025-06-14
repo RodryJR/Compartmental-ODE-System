@@ -5,6 +5,7 @@ from scipy.integrate import solve_ivp
 from src.fitness import CompartmentalGraphFitness
 from src.ga import GeneticGraphSearch
 import os
+import time
 
 def run_genetic_experiment(
     input_filename: str,
@@ -58,15 +59,23 @@ def run_genetic_experiment(
     )
 
     print("\n[*] Iniciando búsqueda con Algoritmo Genético...")
+    
+    start_time = time.time()
     top_solutions = search.run(num_nodes=num_nodes)
-    print("[*] Búsqueda finalizada. Analizando las mejores soluciones...")
+    end_time = time.time()
+    execution_duration = end_time - start_time
+    
+    print(f"[*] Búsqueda finalizada en {execution_duration:.2f} segundos. Analizando las mejores soluciones...")
 
     # <-- 2. Crear una carpeta para guardar las gráficas ---
     plot_dir = "src/analysis_plots"
     os.makedirs(plot_dir, exist_ok=True)
     
-    with open(f'src/experimental_results/{analysis_filename}.txt', "w") as f:
-        f.write(f"ANÁLISIS DE LAS MEJORES SOLUCIONES\nArchivo de datos: {input_filename}\n")
+    with open(f'{analysis_filename}.txt', "w") as f:
+        f.write(f"ANÁLISIS DE LAS MEJORES SOLUCIONES\n")
+        f.write(f"Archivo de datos: {input_filename}\n")
+        minutes, seconds = divmod(execution_duration, 60)
+        f.write(f"Tiempo de ejecución del AG: {int(minutes)} minutos y {seconds:.2f} segundos\n")
         f.write("="*60 + "\n")
 
     for i, (graph, fitness) in enumerate(top_solutions[:5]):

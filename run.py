@@ -13,7 +13,7 @@ if __name__ == "__main__":
             "crossover_rate": 0.9
         },
         "fitness_params": {
-            "threshold": 0.8,
+            "threshold": 1.0,
             "conserve_population": True
         }
     }

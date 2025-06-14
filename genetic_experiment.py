@@ -65,7 +65,7 @@ def run_genetic_experiment(
     plot_dir = "src/analysis_plots"
     os.makedirs(plot_dir, exist_ok=True)
     
-    with open(f'src/result/{analysis_filename}.txt', "w") as f:
+    with open(f'src/experimental_results/{analysis_filename}.txt', "w") as f:
         f.write(f"ANÁLISIS DE LAS MEJORES SOLUCIONES\nArchivo de datos: {input_filename}\n")
         f.write("="*60 + "\n")
 
@@ -89,7 +89,7 @@ def run_genetic_experiment(
         discovered_data = discovered_solution.y.T
         validation_mse = np.mean((discovered_data - data)**2)
         print(f"\n[!] MSE de Validación (vs datos originales): {validation_mse:.8f}")
-        with open(f'src/result/{analysis_filename}.txt', 'a') as f:
+        with open(f'src/experimental_results/{analysis_filename}.txt', 'a') as f:
             f.write(f"\n--- INFORME DE LA SOLUCIÓN #{i+1} ---\n")
             f.write(texto_resultado)
             f.write(f"\n\nMSE de Validación (vs datos originales): {validation_mse:.8f}\n")
@@ -123,5 +123,3 @@ def run_genetic_experiment(
         plt.close(fig)
 
     print(f"\n✅ Análisis completo. Los resultados de texto se han guardado en '{analysis_filename}.txt' y los gráficos en la carpeta '{plot_dir}'.")
-    # <-- 4. ELIMINAR plt.show() para que no se muestren las ventanas
-    # plt.show() 

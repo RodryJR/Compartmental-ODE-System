@@ -4,8 +4,8 @@ from genetic_experiment import*
 if __name__ == "__main__":
     # Define aquí la configuración de un experimento específico
     experiment_config = {
-        "input_filename": "src/sir_data.csv",
-        "analysis_filename": "analysis_report_SIR",
+        "input_filename": "src/data/SIR_noise_0p0.csv",
+        "analysis_filename": "SIR_noise_0p0_exp1",
         "ga_params": {
             "population_size": 30,
             "num_generations": 20,

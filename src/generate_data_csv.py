@@ -9,32 +9,38 @@ import os
 # --------------------------------------------------------------------------
 # (Las definiciones de los modelos: sir_model, seir_model, etc., van aquí sin cambios)
 def sir_model(t, y, beta, gamma):
-    S, I, R = y; S, I, R = max(S, 0), max(I, 0), max(R, 0)
+    S, I, R = y; 
+    #S, I, R = max(S, 0), max(I, 0), max(R, 0)
     dSdt = -beta * S * I; dIdt = beta * S * I - gamma * I; dRdt = gamma * I
     return [dSdt, dIdt, dRdt]
 
 def seir_model(t, y, beta, sigma, gamma):
-    S, E, I, R = y; S, E, I, R = max(S, 0), max(E, 0), max(I, 0), max(R, 0)
+    S, E, I, R = y; 
+    #S, E, I, R = max(S, 0), max(E, 0), max(I, 0), max(R, 0)
     dSdt = -beta * S * I; dEdt = beta * S * I - sigma * E; dIdt = sigma * E - gamma * I; dRdt = gamma * I
     return [dSdt, dEdt, dIdt, dRdt]
 
 def sird_model(t, y, beta, gamma, mu):
-    S, I, R, D = y; S, I, R, D = max(S, 0), max(I, 0), max(R, 0), max(D, 0)
+    S, I, R, D = y; 
+    #S, I, R, D = max(S, 0), max(I, 0), max(R, 0), max(D, 0)
     dSdt = -beta * S * I; dIdt = beta * S * I - gamma * I - mu * I; dRdt = gamma * I; dDdt = mu * I
     return [dSdt, dIdt, dRdt, dDdt]
 
 def seirv_model(t, y, beta, sigma, gamma, nu):
-    S, E, I, R, V = y; S, E, I, R, V = max(S, 0), max(E, 0), max(I, 0), max(R, 0), max(V, 0)
+    S, E, I, R, V = y; 
+    #S, E, I, R, V = max(S, 0), max(E, 0), max(I, 0), max(R, 0), max(V, 0)
     dSdt = -beta * S * I - nu * S; dEdt = beta * S * I; dIdt = sigma * E - gamma * I; dRdt = gamma * I; dVdt = nu * S
     return [dSdt, dEdt, dIdt, dRdt, dVdt]
 
 def siqrd_model(t, y, beta, gamma, delta, mu, eta, kappa):
-    S, I, Q, R, D = y; S, I, Q, R, D = max(S, 0), max(I, 0), max(Q, 0), max(R, 0), max(D, 0)
+    S, I, Q, R, D = y; 
+    #S, I, Q, R, D = max(S, 0), max(I, 0), max(Q, 0), max(R, 0), max(D, 0)
     dSdt = -beta * S * I; dIdt = beta * S * I - (gamma + delta + mu) * I; dQdt = delta * I - (eta + kappa) * Q; dRdt = gamma * I + eta * Q; dDdt = mu * I + kappa * Q
     return [dSdt, dIdt, dQdt, dRdt, dDdt]
 
 def svv_eir_model(t, y, beta, sigma, gamma, nu1, nu2, epsilon1, epsilon2):
-    S, V1, V2, E, I, R = y; S, V1, V2, E, I, R = max(S, 0), max(V1, 0), max(V2, 0), max(E, 0), max(I, 0), max(R, 0)
+    S, V1, V2, E, I, R = y; 
+    #S, V1, V2, E, I, R = max(S, 0), max(V1, 0), max(V2, 0), max(E, 0), max(I, 0), max(R, 0)
     infection_from_S = beta * S * I; infection_from_V1 = epsilon1 * beta * V1 * I; infection_from_V2 = epsilon2 * beta * V2 * I
     total_new_exposed = infection_from_S + infection_from_V1 + infection_from_V2
     dSdt = -infection_from_S - nu1 * S; dV1dt = nu1 * S - infection_from_V1 - nu2 * V1; dV2dt = nu2 * V1 - infection_from_V2; dEdt = total_new_exposed - sigma * E; dIdt = sigma * E - gamma * I; dRdt = gamma * I
@@ -45,7 +51,7 @@ def svv_eir_model(t, y, beta, sigma, gamma, nu1, nu2, epsilon1, epsilon2):
 # --------------------------------------------------------------------------
 TIME_SETTINGS = {'start': 0, 'end': 150, 'points': 150}
 # Estos niveles ahora representan el 'factor_ruido' o 'max_noise'
-NOISE_LEVELS = [0.0, 0.015, 0.030] 
+NOISE_LEVELS = [0.005, 0.015, 0.030] 
 
 SCENARIOS = [
     {"name": "SIR", "model_func": sir_model, "initial_conditions": [0.99, 0.01, 0.0], "parameters": {'beta': 0.4, 'gamma': 0.1}},
@@ -93,7 +99,8 @@ if __name__ == "__main__":
             
             # --- CAMBIO CLAVE: Aplicando la nueva fórmula de ruido ---
             # y_ruidoso = y_limpio + y_limpio * factor_ruido * random_standard_normal()
-            noisy_data = clean_data + clean_data * noise_factor * np.random.normal(0, 1, clean_data.shape)
+            # noisy_data = clean_data + clean_data * noise_factor * np.random.normal(0, 1, clean_data.shape)
+            noisy_data = clean_data + np.random.normal(0, noise_factor, clean_data.shape)
 
             # Lógica para guardar el archivo
             num_compartments = len(y0)

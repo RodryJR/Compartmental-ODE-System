@@ -62,10 +62,10 @@ def run_genetic_experiment(
     print("[*] Búsqueda finalizada. Analizando las mejores soluciones...")
 
     # <-- 2. Crear una carpeta para guardar las gráficas ---
-    plot_dir = "analysis_plots"
+    plot_dir = "src/analysis_plots"
     os.makedirs(plot_dir, exist_ok=True)
     
-    with open(f'{analysis_filename}.txt', "w") as f:
+    with open(f'src/result/{analysis_filename}.txt', "w") as f:
         f.write(f"ANÁLISIS DE LAS MEJORES SOLUCIONES\nArchivo de datos: {input_filename}\n")
         f.write("="*60 + "\n")
 
@@ -89,7 +89,7 @@ def run_genetic_experiment(
         discovered_data = discovered_solution.y.T
         validation_mse = np.mean((discovered_data - data)**2)
         print(f"\n[!] MSE de Validación (vs datos originales): {validation_mse:.8f}")
-        with open(f'{analysis_filename}.txt', 'a') as f:
+        with open(f'src/result/{analysis_filename}.txt', 'a') as f:
             f.write(f"\n--- INFORME DE LA SOLUCIÓN #{i+1} ---\n")
             f.write(texto_resultado)
             f.write(f"\n\nMSE de Validación (vs datos originales): {validation_mse:.8f}\n")

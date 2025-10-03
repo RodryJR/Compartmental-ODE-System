@@ -1,0 +1,27 @@
+\begin{resumen}
+
+
+Los sistemas de ecuaciones diferenciales ordinarias compartimentales son una herramienta fundamental para modelar dinámicas de fenómenos en áreas como la epidemiología, donde las variables representan fracciones o cantidades de individuos en distintos estados. Sin embargo, la estructura de estos sistemas no siempre es conocida, y su identificación a partir de datos observacionales constituye un problema complejo de regresión simbólica.
+
+En esta tesis se propone un enfoque basado en algoritmos genéticos para inferir automáticamente sistemas compartimentales lineales con respecto a los parámetros. Cada posible modelo es representado mediante un grafo dirigido, donde los nodos corresponden a compartimentos y las aristas definen los flujos entre ellos. A partir de estos grafos, se construyen sistemas de ecuaciones diferenciales con términos polinómicos cuadráticos, cuyos coeficientes se ajustan mediante mínimos cuadrados sobre los datos.
+
+La metodología fue validada con datos sintéticos generados a partir de modelos clásicos como SIR, SEIR, SIRD y SEIRV, con diferentes niveles de ruido. Los resultados muestran que el algoritmo propuesto puede aproximar con alta fidelidad las trayectorias de los datos, recuperando estructuras dinámicas consistentes incluso en presencia de perturbaciones. Esta herramienta proporciona una vía efectiva y simbólicamente interpretable para el descubrimiento automático de modelos compartimentales a partir de observaciones.
+
+
+
+\textit{Palabras clave:} Sistemas compartimentales, algoritmos genéticos, regresión simbólica, ecuaciones diferenciales, modelos epidemiológicos, inferencia automática, ajuste de modelos.
+
+\end{resumen}
+
+\begin{abstract}
+
+Compartmental ordinary differential equation (ODE) systems are a fundamental tool for modeling dynamic phenomena in fields such as epidemiology, where variables represent fractions or counts of individuals in different states. However, the structure of these systems is not always known, and identifying them from observational data poses a complex symbolic regression problem.
+
+This thesis proposes an approach based on genetic algorithms to automatically infer compartmental systems that are linear with respect to their parameters. Each possible model is represented as a directed graph, where nodes correspond to compartments and edges define the flows between them. From these graphs, systems of differential equations with quadratic polynomial terms are constructed, and their coefficients are estimated using least squares on the observed data.
+
+The methodology was validated using synthetic data generated from classical models such as SIR, SEIR, SIRD, and SEIRV, under different noise levels. The results show that the proposed algorithm can accurately approximate the trajectories of the data, recovering structurally consistent dynamics even in the presence of noise. This tool offers an effective and symbolically interpretable framework for the automatic discovery of compartmental models from observations.
+
+\textit{Key words:} Compartmental systems, genetic algorithms, symbolic regression, differential equations, epidemiological models, automatic inference, model fitting.
+
+
+\end{abstract}

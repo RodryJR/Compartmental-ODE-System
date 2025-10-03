@@ -1,0 +1,98 @@
+\chapter*{Introducción}\label{chapter:introduction}
+
+Las ecuaciones diferenciales ordinarias describen la evolución continua de fen\'omenos, son fundamentales en diversas 
+áreas científicas y de ingeniería. Se emplean en física para representar el cambio en sistemas dinámicos \cite{strogatz2015}; en química, modelan 
+la cinética de reacciones, permitiendo la predicción de concentraciones de sustancias \cite{atkins2014}; y en biología, se utilizan para el análisis 
+del crecimiento poblacional, la interacción entre especies y la propagación de enfermedades \cite{murray2002}. Adicionalmente, en economía, estas 
+ecuaciones facilitan la representación 
+de dinámicas de crecimiento y fluctuaciones de mercado \cite{chiang2005}, mientras que el análisis de sus soluciones es crucial para el diseño y control 
+de sistemas en ingeniería \cite{ogata2010}. Las ecuaciones diferenciales proporciona un marco para la validación de hipótesis y la 
+elaboración de predicciones.
+
+La representación de un fenómeno mediante una ecuación diferencial ordinaria se establece al definir una función para las tasas de cambio del sistema, 
+tal como $y' = f(t, y, \theta)$, donde $\theta$ denota los parámetros del modelo. Los modelos de ecuaciones diferenciales son instrumentos de análisis para 
+la dinámica de sistemas en campos como la biología \cite{alon2006}, la ingeniería \cite{ljung1999} y la ecología \cite{turchin2003}, donde interacciones de 
+múltiples componentes se investigan mediante formulaciones matemáticas. Un componente principal en la determinación de $f(t, y, \theta)$ a partir de datos de 
+observación es la selección de la estructura del modelo, que especifica las interacciones y dependencias funcionales, junto con la posterior estimación de los 
+parámetros $\theta$ \cite{brunton2022}. La identificación del sistema de ecuaciones que describe de manera adecuada un conjunto de observaciones facilita la 
+simulación del fenómeno, 
+la inferencia de mecanismos del sistema y la capacidad de predicción.
+
+La determinación de sistemas de ecuaciones diferenciales ordinarias (EDOs) a partir de datos ha impulsado el desarrollo de variadas metodologías 
+computacionales. La regresión simbólica explora espacios de funciones para descubrir la estructura matemática de las EDOs que rigen un 
+sistema, buscando ecuaciones que se ajusten a los datos sin una forma predefinida \cite{schmidt2009}. Una técnica que ha ganado atención es SINDy, 
+la cual identifica modelos de EDOs con un número reducido de términos activos a partir de datos de series 
+temporales, bajo la premisa de que la dinámica subyacente es dispersa en un diccionario de funciones candidatas \cite{brunton2016sindy}. En paralelo, 
+las arquitecturas de redes neuronales se han adaptado para esta tarea: las Redes Neuronales Informadas por la Física incorporan el cumplimiento de las 
+EDOs directamente en su función de pérdida durante el entrenamiento para inferir tanto soluciones como parámetros del modelo 
+\cite{raissi2019pinn}, y las EDOs Neuronales aprenden la propia función de la derivada $f$ en $y' = f(t,y,\theta)$ como una red neuronal continua 
+en el tiempo \cite{chen2018neuralode}. Adicionalmente, se emplean enfoques bayesianos para la inferencia de modelos de EDOs y la cuantificación de la 
+incertidumbre asociada \cite{girolami2011bayesian}, junto con extensiones de métodos de identificación de sistemas para dinámicas no lineales complejas 
+\cite{nelles2020nonlinear}.
+
+A diferencia de los enfoques generales para descubrir ecuaciones di\-fe\-ren\-cia\-les ordinarias (EDOs) a partir de datos, como la regresión simbólica o SINDy 
+que pueden explorar una amplia variedad de formas matemáticas \cite{brunton2016sindy}, este trabajo se concentra en un tipo específico de modelo: 
+los sistemas compartimentales \cite{godfrey1983}. Los modelos compartimentales representan un sistema dividiéndolo en un número definido de componentes 
+distintos y des\-cri\-ben cómo las cantidades fluyen o interactúan entre ellos mediante funciones que rigen dichas transferencias. 
+El problema no consiste en encontrar cualquier forma de ecuación que se ajuste a los datos, 
+sino en identificar cómo se conectan los compartimentos y las ecuaciones específicas de los flujos 
+entre ellos que mejor reflejan las observaciones. Por tanto, la pregunta central de este trabajo es:
+¿Es posible inferir automáticamente la estructura de un sistema compartimental, representado como un grafo dirigido, a partir de datos observacionales, 
+de modo que las ecuaciones diferenciales asociadas a dicho grafo reproduzcan fielmente la dinámica del sistema observado?
+
+Hip\'otesis de la investigaci\'on: La integración de un algoritmo genético con un esquema de evaluación basado en simulaciones numéricas permite 
+inferir de forma automática y precisa la estructura de un sistema compartimental, representado como un grafo dirigido, a partir de datos observacionales, 
+generando modelos dinámicos capaces de reproducir la evolución del sistema con bajo error y adecuada simplicidad estructural.
+
+El objetivo de este trabajo es desarrollar un algoritmo genético que permita encontrar, a partir de un conjunto de datos, 
+la estructura que define un modelo de dinámica poblacional representado por un sistema compartimental.
+
+Para lograr el objetivo general, se han trazado los siguientes objetivos
+específicos:
+
+\begin{enumerate}
+    \item Revisar la literatura sobre el estado del arte existente sobre modelado compartimental, ecuaciones diferenciales ordinarias y algoritmos genéticos aplicados a la identificación de modelos dinámicos.
+    \item Definir formalmente el proceso de generación de sistemas de ecuaciones diferenciales ordinarias a partir de estructuras de grafos dirigidos, considerando términos lineales y cuadráticos que representen las interacciones entre compartimentos.
+    \item Diseñar una metodología para evaluar la calidad de un modelo mediante simulaciones numéricas y el cálculo de un puntaje de fitness basado en el error cuadrático medio y penalizaciones por complejidad o violaciones de restricciones estructurales.
+    \item Implementar un algoritmo genético que utilice operadores de cruzamiento y mutación para explorar el espacio de grafos dirigidos, garantizando la validez estructural de los modelos generados.
+    \item Integrar el mecanismo de evaluación de \textit{fitness} en el ciclo evolutivo del algoritmo genético para seleccionar, en cada generación, los modelos que mejor representen los datos observados.
+    \item Validar el algoritmo propuesto mediante su aplicación a conjuntos de datos simulados o reales, analizando la capacidad del método para identificar modelos consistentes y ajustados a la dinámica observada.
+\end{enumerate}
+
+La propuesta de solución de este trabajo consiste en integrar un algoritmo genético con un mecanismo de evaluación basado en simulaciones 
+de sistemas de ecuaciones diferenciales ordinarias generadas a partir de grafos compartimentales. La metodología parte de un conjunto de datos 
+observados que describen la dinámica poblacional de un sistema, junto con la formulación de ecuaciones diferenciales que incluyen términos lineales 
+y cuadráticos derivados de las interacciones posibles entre compartimentos. El algoritmo genético opera sobre una población inicial de grafos dirigidos, 
+generados aleatoriamente bajo restricciones estructurales de validez.
+
+Cada grafo es evaluado convirtiéndolo en un sistema de ecuaciones di\-fe\-ren\-cia\-les cuya solución es ajustada a los datos mediante un proceso de regresión lineal 
+y posterior simplificación. Las ecuaciones resultantes se re\-cons\-tru\-yen para reflejar únicamente las conexiones explícitas del grafo, y son convertidas en 
+funciones numéricas que respetan restricciones físicas como la conservación de la población y la no negatividad de las variables. La integración numérica de 
+estas ecuaciones permite calcular un error cuadrático medio, que se ajusta mediante penalizaciones por exceso de complejidad o violaciones de las restricciones 
+establecidas.
+
+El ciclo evolutivo del algoritmo incluye operaciones de cruzamiento y mutación, que permiten explorar nuevas estructuras de grafo a partir de las mejores soluciones 
+encontradas en cada generación. La selección elitista asegura que los mejores modelos se mantengan y evolucionen progresivamente hacia soluciones que balanceen 
+precisión y simplicidad. De esta manera, la propuesta combina técnicas de optimización y modelado dinámico para identificar la estructura de grafo que mejor 
+representa el sistema observado.
+
+La estructura de este documento consta con 4 cap\'itulos: 
+
+En el Capítulo~\ref{chapter:preliminares} se presentan los conceptos fundamentales necesarios para el desarrollo de esta investigación. Se inicia con una introducción a los sistemas de 
+ecuaciones diferenciales ordinarias, como base formal para modelar dinámicas continuas. A continuación, se describe el enfoque compartimental, que permite representar 
+estos sistemas mediante grafos dirigidos, facilitando la modelación estructurada de flujos entre compartimentos. Luego se introduce el método de ajuste por mínimos 
+cuadrados como herramienta para estimar los parámetros de los modelos a partir de datos observacionales. Posteriormente, se abordan los métodos numéricos de 
+integración empleados para resolver los sistemas de ecuaciones diferenciales propuestos. 
+Finalmente, se detalla el funcionamiento del algoritmo genético, incluyendo sus principales operadores: selección, cruzamiento y mutación, los cuales permiten 
+explorar el espacio de estructuras posibles y encontrar grafos que generen modelos compartimentales coherentes y ajustados a los datos.
+
+El Capítulo~\ref{chapter:fitness} describe en detalle el procedimiento utilizado para evaluar la calidad de un modelo compartimental representado por un grafo dirigido, utilizando datos observacionales como referencia. El proceso comienza con la construcción de una base polinómica que incluye todos los términos hasta segundo orden, los cuales se emplean para generar ecuaciones diferenciales preliminares asociadas a cada nodo del grafo. A continuación, se realiza una estimación de los coeficientes de dichos términos mediante ajuste por mínimos cuadrados, seguida de una etapa de filtrado que descarta aquellos con baja significancia o sin respaldo estructural según las conexiones del grafo. Con los términos seleccionados, se reconstruye el sistema dinámico completo, asegurando que las interacciones incluidas respeten la topología del grafo y que las direcciones del flujo queden correctamente reflejadas en los signos de los coeficientes. Posteriormente, estas ecuaciones simbólicas se transforman en funciones computables que permiten realizar simulaciones numéricas del sistema. La calidad del ajuste se cuantifica mediante un puntaje de \textit{fitness}, que se calcula como el error cuadrático medio entre los datos simulados y los observados, complementado con penalizaciones que reflejan violaciones a principios estructurales, biológicos o de parsimonia. Esta métrica final permite comparar objetivamente distintos modelos, guiando así procesos de selección o búsqueda automatizada.
+
+El Capítulo~\ref{chapter:ga} presenta el desarrollo de un algoritmo genético como herramienta para explorar configuraciones estructurales de grafos dirigidos que puedan representar adecuadamente modelos dinámicos. Se comienza estableciendo los parámetros fundamentales del algoritmo y generando una población inicial de grafos válidos. Posteriormente, se aplican operadores genéticos como cruzamiento y mutación, diseñados para crear nuevas estructuras a partir de las existentes, manteniendo siempre condiciones de validez estructural. Estos nuevos individuos se someten a evaluación a través de una función de \textit{fitness}, y mediante un proceso de selección elitista se conservan las configuraciones más prometedoras para las siguientes generaciones. El ciclo evolutivo se repite durante múltiples iteraciones, promoviendo la mejora progresiva de los modelos y guiando la búsqueda hacia soluciones óptimas o cercanas al óptimo dentro del espacio de grafos posibles.
+
+El Capítulo~\ref{chapter:Results} presenta los experimentos realizados para evaluar la efectividad del algoritmo propuesto en la identificación de sistemas compartimentales 
+a partir de datos observacionales. Se describen los escenarios experimentales utilizados, incluyendo configuraciones de parámetros y conjuntos de datos. 
+Posteriormente, se muestran los resultados obtenidos para distintos modelos, analizando la calidad del ajuste, la coherencia estructural de los grafos generados y 
+el comportamiento evolutivo del algoritmo. 
+
+Finalmente, se plantean las conclusiones del estudio, recomendaciones derivadas de los resultados y posibles líneas de trabajo futuro.

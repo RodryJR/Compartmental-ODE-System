@@ -1,1 +1,7 @@
 # Compartmental-ODE-System
+
+Compartmental ordinary differential equation (ODE) systems are a fundamental tool for modeling dynamic phenomena in fields such as epidemiology, where variables represent fractions or counts of individuals in different states. However, the structure of these systems is not always known, and identifying them from observational data poses a complex symbolic regression problem.
+
+This thesis proposes an approach based on genetic algorithms to automatically infer compartmental systems that are linear with respect to their parameters. Each possible model is represented as a directed graph, where nodes correspond to compartments and edges define the flows between them. From these graphs, systems of differential equations with quadratic polynomial terms are constructed, and their coefficients are estimated using least squares on the observed data.
+
+The methodology was validated using synthetic data generated from classical models such as SIR, SEIR, SIRD, and SEIRV, under different noise levels. The results show that the proposed algorithm can accurately approximate the trajectories of the data, recovering structurally consistent dynamics even in the presence of noise. This tool offers an effective and symbolically interpretable framework for the automatic discovery of compartmental models from observations.

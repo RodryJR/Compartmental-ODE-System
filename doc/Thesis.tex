@@ -1,0 +1,80 @@
+\documentclass[10pt,oneside]{uhthesis}
+\usepackage{subfigure}
+\usepackage[ruled,lined,linesnumbered,titlenumbered,algochapter,english]{algorithm2e}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsbsy}
+\usepackage{caption,booktabs}
+\usepackage{tikz}
+\usepackage{graphicx}
+\captionsetup{
+	justification = centering
+}
+\usepackage{float}
+\usepackage{todonotes}
+\usepackage[normalem]{ulem}
+\usepackage{setspace}
+
+\floatstyle{plaintop}
+\restylefloat{table}
+
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\listalgorithmcfname}{Índice de Algoritmos}%
+\SetAlgoNoEnd
+
+\title{
+    Propuesta para encontrar el sistema de ecuaciones
+    diferenciales compartimentales lineales con
+    respecto a los parámetros que mejor
+    ajuste un conjunto de datos
+}
+\author{\\\vspace{0.25cm}Dario Rodríguez Llosa}
+\advisor{
+    \\\vspace{0.25cm}MSc. Fernando Rodríguez Flores
+}
+\degree{Licenciado en Ciencia de la Computación}
+\faculty{Facultad de Matemática y Computación}
+\date{15 de junio de 2025}
+\logo{Graphics/uhlogo}
+\makenomenclature
+
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+\newcommand{\diff}[1]{\ensuremath{\mathrm{d}#1}}
+\newcommand{\me}[1]{\mathrm{e}^{#1}}
+\newcommand{\pf}{\mathfrak{p}}
+\newcommand{\qf}{\mathfrak{q}}
+\newcommand{\kt}{\mathtt{k}}
+\newcommand{\mf}{\mathfrak{m}}
+\newcommand{\hf}{\mathfrak{h}}
+\newcommand{\fac}{\mathrm{fac}}
+\newcommand{\maxx}[1]{\max\left\{ #1 \right\} }
+\newcommand{\minn}[1]{\min\left\{ #1 \right\} }
+\newcommand{\lldpcf}{1.25}
+\newcommand{\nnorm}[1]{\left\lvert #1 \right\rvert }
+
+\begin{document}
+
+\frontmatter
+\maketitle
+
+\include{FrontMatter/Dedication}
+\include{FrontMatter/Thanks}
+\include{FrontMatter/SupervisorOpinion}
+\include{FrontMatter/Abstract}
+\include{FrontMatter/Contents}
+
+\mainmatter
+
+\include{MainMatter/Introduction}
+\include{MainMatter/Preeliminares}
+\include{MainMatter/Fitness}
+\include{MainMatter/ga}
+\include{MainMatter/Results}
+
+\backmatter
+
+\include{BackMatter/Conclusions}
+\include{BackMatter/Recomendations}
+\include{BackMatter/Bibliography}
+
+\end{document}

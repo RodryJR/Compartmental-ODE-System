@@ -1,0 +1,24 @@
+\begin{recomendations}
+
+A partir de los resultados obtenidos en esta investigación, se identifican varias direcciones que podrían explorarse en trabajos futuros para mejorar el rendimiento, robustez y aplicabilidad del sistema propuesto. A continuación se enumeran las principales recomendaciones:
+
+\begin{enumerate}
+    \item Se recomienda rediseñar la función de \textit{fitness} como un esquema de optimización multiobjetivo, permitiendo balancear explícitamente el error de ajuste (MSE) con la complejidad estructural del modelo. Esto facilitaría la recuperación de soluciones con mayor ajuste a los datos aunque presenten una o dos aristas adicionales.
+
+    \item Se sugiere ampliar el espacio funcional de las ecuaciones diferenciales más allá de combinaciones polinómicas cuadráticas. La inclusión de cocientes racionales, funciones logarítmicas o exponenciales permitiría aproximar sistemas como el SIRD o SEIRV, donde aparecen términos dependientes del total poblacional.
+
+    \item Se aconseja incrementar los parámetros evolutivos del algoritmo genético, como el tamaño poblacional o la cantidad de generaciones, al trabajar con modelos complejos. Esto permitiría una exploración más profunda del espacio de búsqueda y la obtención de soluciones más ajustadas.
+
+    \item Se recomienda desarrollar una interfaz gráfica de usuario (GUI) que permita cargar datos, configurar parámetros del algoritmo, visualizar grafos y ecuaciones, y exportar resultados. Esto facilitaría el uso del sistema por parte de profesionales no programadores, como epidemiólogos o investigadores en salud pública.
+
+    \item \textbf{Control automático del \textit{threshold}}: adaptar dinámicamente el valor del umbral de significancia durante la evolución podría ayudar a balancear precisión y simplicidad sin requerir intervención manual.
+
+
+    \item Finalmente, se sugiere estudiar la integración de esta metodología basada en algoritmos genéticos con otros enfoques simbólicos de inferencia de ecuaciones, como SINDy o redes neuronales simbólicas. Esta combinación podría mejorar la capacidad de recuperación de sistemas dinámicos complejos y ofrecer interpretabilidad adicional.
+\end{enumerate}
+
+
+Estas recomendaciones buscan abordar las limitaciones identificadas a lo largo de esta investigación, tanto en el diseño del algoritmo como en su capacidad de generalización frente a estructuras compartimentales complejas y datos con ruido. Su implementación permitiría enriquecer el marco metodológico propuesto, aumentar su precisión y ampliar su aplicabilidad a contextos más desafiantes, como datos empíricos reales o sistemas con formulaciones no estrictamente polinómicas. Asimismo, estos trabajos futuros abrirían nuevas oportunidades para integrar herramientas de aprendizaje automático simbólico con enfoques epidemiológicos, facilitando el descubrimiento automatizado de modelos dinámicos interpretables. En conjunto, las líneas sugeridas constituyen un camino fértil para avanzar hacia sistemas más robustos, expresivos y útiles en la modelación de fenómenos complejos desde datos.
+
+
+\end{recomendations}

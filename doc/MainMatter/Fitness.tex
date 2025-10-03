@@ -1,0 +1,231 @@
+\chapter{C\'alculo del \textit{Fitness}}\label{chapter:fitness}
+
+En este capítulo se describe el procedimiento mediante el cual se evalúa la capacidad de un grafo dirigido para modelar un sistema compartimental que represente 
+adecuadamente datos observacionales. Cada grafo candidato define de manera única un sistema de ecuaciones diferenciales ordinarias (EDOs), donde los nodos corresponden 
+a compartimentos y las aristas representan interacciones entre ellos. A partir de la estructura del grafo y de las trayectorias temporales observadas, se construyen 
+las ecuaciones dinámicas correspondientes, ajustando sus coeficientes mediante información extraída de los datos. Esta conversión permite evaluar computacionalmente 
+qué tan bien el sistema de EDOs asociado al grafo logra reproducir la dinámica observada, a través de una función de \textit{fitness} que combina precisión en el 
+ajuste, plausibilidad estructural y restricciones biológicas.
+
+La sección~\ref{sec:exp_pol} introduce la generación inicial de ecuaciones polinomiales hasta segundo orden para cada compartimento, a partir de una biblioteca de términos 
+construida de forma sistemática. En la sección~\ref{sec:term_sig} se detalla el procedimiento de selección de términos significativos, que consiste en ajustar los coeficientes 
+por mínimos cuadrados, normalizar sus valores y filtrar aquellos de baja relevancia, manteniendo la coherencia estructural con el grafo. La sección~\ref{sec:cons_sis} 
+explica cómo, a partir de los términos seleccionados y las conexiones topológicas del grafo, se construyen las ecuaciones diferenciales completas del sistema dinámico, 
+y se describe cómo estas ecuaciones simbólicas se 
+convierten en funciones numéricamente evaluables, permitiendo calcular trayectorias simuladas. Finalmente, en la sección~\ref{sec:punt_fit} se presenta la definición completa del 
+\textit{fitness}, que incluye el cálculo del error cuadrático medio entre datos y simulaciones, junto con penalizaciones por comportamientos no deseados como 
+poblaciones negativas, alta complejidad estructural o sobreconectividad del grafo.
+
+A continuación, se describe el proceso de generación y filtrado de términos polinomiales que sirven como base para construir el sistema dinámico asociado a cada grafo.
+
+\section{Expansión Polinómica del Modelo Dinámico}
+\label{sec:exp_pol}
+
+El cálculo del \textit{fitness} comienza con una matriz de datos temporales que describe la evolución de las poblaciones 
+en cada compartimento a lo largo del tiempo y un grafo dirigido que representa las interacciones entre dichos compartimentos. 
+
+Para cada compartimento, se generan ecuaciones que contienen todos los posibles términos  polinomiales hasta segundo orden. Esta construcción de una biblioteca de 
+funciones candidatas a partir de la cual se seleccionará la estructura del modelo es una práctica establecida en la identificación de sistemas dinámicos no lineales 
+\cite{ljung1999, Billings2013}. Los términos considerados son:
+
+\begin{itemize}
+    \item Términos lineales del tipo $X_i$, donde $X_i$ es la variable asociada al compartimento $i$.
+    \item Términos cuadráticos del tipo $X_i X_j$ para todas las combinaciones posibles de compartimentos $i$ y $j$, incluyendo productos consigo mismos.
+\end{itemize}
+
+Por ejemplo, en un sistema con \(X_0, X_1, X_2\) donde cada uno de estos compartimentos representan un nodo del grafo, las ecuaciones asociadas a cada nodo serían:
+\begin{align*}
+    \frac{dX_0}{dt} &= a_{00} X_0 + a_{01} X_1 + a_{02} X_2 + a_{03} X_0^2 + a_{04} X_0 X_1 + a_{05} X_0 X_2 + a_{06} X_1^2 + a_{07} X_1 X_2 + a_{08} X_2^2, \\
+    \frac{dX_1}{dt} &= a_{10} X_0 + a_{11} X_1 + a_{12} X_2 + a_{13} X_0^2 + a_{14} X_0 X_1 + a_{15} X_0 X_2 + a_{16} X_1^2 + a_{17} X_1 X_2 + a_{18} X_2^2, \\
+    \frac{dX_2}{dt} &= a_{20} X_0 + a_{21} X_1 + a_{22} X_2 + a_{23} X_0^2 + a_{24} X_0 X_1 + a_{25} X_0 X_2 + a_{26} X_1^2 + a_{27} X_1 X_2 + a_{28} X_2^2.
+\end{align*}
+
+La inclusión sistemática de estos términos se inspira en técnicas clásicas de modelado de sistemas dinámicos, donde los términos lineales permiten representar 
+efectos proporcionales como tasas constantes de crecimiento o pérdida \cite{strogatz2018nonlinear}, mientras que los términos cuadráticos capturan interacciones 
+no lineales entre compartimentos, tales como competencia \cite{murray2002mathematical}, cooperación o transmisión \cite{anderson1992infectious}. 
+
+Este conjunto base de funciones puede entenderse como una expansión polinómica de orden dos, similar a una serie de Taylor truncada \cite{ArfkenWeberHarris2012}, 
+diseñada para capturar la dinámica local del sistema mediante combinaciones algebraicas con complejidad acotada. Al incluir desde el inicio todos los términos 
+polinomiales de primer y segundo orden que puedan influir en la evolución del sistema, se evita descartar prematuramente posibles interacciones relevantes.
+
+Este paso proporciona una base estructurada sobre la cual se realiza, en la próxima sección, la selección de los términos significativos que son aquellos que 
+resultan relevantes para describir la dinámica observada.
+
+\section{Selección de Términos Significativos}
+\label{sec:term_sig}
+
+Una vez generadas las ecuaciones expandidas para cada compartimento, el siguiente paso consiste en ajustar sus coeficientes y seleccionar los términos significativos. 
+La relevancia de un término se determina en función de la magnitud y el signo de su coeficiente tras el ajuste, así como de su coherencia con la topología del grafo. 
+Este proceso se desarrolla en tres etapas: ajuste de coeficientes, eliminación de términos no significativos, e identificación de términos compartidos entre 
+compartimentos conectados.
+
+Para cada ecuación, se estiman las derivadas numéricas de los datos originales utilizando diferencias finitas hacia adelante, lo que permite aproximar las 
+tasas de cambio temporales. Por ejemplo, si se dispone de datos de población para el compartimento \(X_1\) 
+en los tiempos \(t_0\) y \(t_1\), la derivada en \(t_0\) se puede calcular como:
+\[
+\dot{X}_1(t_0) \approx \frac{X_1(t_1) - X_1(t_0)}{\Delta t}.
+\]
+Para el último punto de la serie temporal, se utiliza una fórmula de diferencia finita hacia atrás:
+\[
+\dot{X}_1(t_{n-1}) \approx \frac{X_1(t_{n-1}) - X_1(t_{n-2})}{\Delta t}.
+\]
+
+A continuación, se construye una matriz que contiene la evaluación de cada término algebraico en cada instante de tiempo. Esta matriz permite reformular el 
+problema como un sistema lineal, donde los coeficientes de la ecuación diferencial son las incógnitas, y la derivada numérica actúa como vector objetivo. 
+Este enfoque es común en la identificación de sistemas dinámicos \cite{ljung1999, Billings2013}.
+
+Por ejemplo, si una ecuación incluye los términos \(X_0\), \(X_1\) y \(X_0 X_1\), y se tienen observaciones en 4 puntos de tiempo, entonces la matriz de diseño 
+tendrá 4 filas y 3 columnas, donde cada entrada corresponde al valor del término evaluado en ese instante. El sistema se resuelve mediante mínimos cuadrados para 
+encontrar los coeficientes que minimizan la diferencia entre las derivadas observadas y las predichas.
+
+Los coeficientes obtenidos se normalizan al intervalo \([0, 1]\), conservando el signo original. Esta normalización facilita la comparación entre términos 
+y permite interpretar la magnitud relativa de cada interacción \cite{Bishop2006, Hastie2009}.  Preservar los signos es importante, ya que indica la dirección del 
+flujo: coeficientes positivos representan aportes a un compartimento, mientras que valores negativos corresponden a salidas.
+
+Tras el ajuste, se eliminan todos los términos cuyo coeficiente sea inferior a un umbral predefinido. Este umbral actúa como un hiperparámetro que regula el equilibrio 
+entre la complejidad del modelo y su capacidad de ajuste. Por ejemplo, si el umbral es 0.1, el término $0.05 X_2^2$ sería eliminado por considerarse no significativo. 
+Un umbral bajo puede conducir a modelos con demasiados términos irrelevantes y, por ende, propensos al sobreajuste \cite{Hastie2009}. Por el contrario, un umbral 
+excesivamente alto podría descartar interacciones relevantes.  Esta técnica de eliminación de términos basada en la magnitud de sus coeficientes es una forma de 
+selección de variables o reducción de la complejidad del modelo \cite{Billings2013, Hastie2009}.
+
+La eliminación de t\'erminos no significativos responde al principio de parsimonia en modelado matemático \cite{Burnham2002, Box1976}, priorizando modelos más simples 
+y comprensibles sin sacrificar precisión. El resultado es un conjunto reducido de términos con impacto significativo en la dinámica poblacional observada.
+
+Después de eliminar los términos no relevantes, se comparan las ecuaciones de los nodos que están conectados entre sí en el grafo. Se identifican los términos que 
+aparecen simultáneamente en ambas ecuaciones; por ejemplo, si los compartimentos \(X_1\) y \(X_2\) están conectados, sus ecuaciones diferenciales respectivas luego 
+del ajuste y selección de términos significativos quedan como:
+\begin{align*}
+\frac{dX_1}{dt} &= 0.5 X_1 + 0.2 X_1 X_2 + 0.1 X_2^2, \\
+\frac{dX_2}{dt} &= -0.4 X_2 + 0.3 X_1 X_2 + 0.2 X_1^2.
+\end{align*}
+El término \(X_1 X_2\) aparece en ambas ecuaciones, indicando una interacción directa entre los compartimentos. Por tanto, este término 
+se conserva como representativo de la influencia mutua modelada por la arista entre \(X_1\) y \(X_2\).
+
+En caso de que no existan términos comunes entre dos nodos conectados, se introduce al menos un término que combine sus variables, como \(X_i X_j\). Esto garantiza 
+que toda conexión topológica en el grafo tenga una contraparte algebraica en el sistema de ecuaciones. Así se mantiene la coherencia entre la estructura del grafo y la 
+formulación matemática del modelo. Esta adición no es arbitraria: el término \(X_i X_j\) tiene una interpretación natural como interacción entre las poblaciones de 
+ambos compartimentos. Por ejemplo, \(X_0\) y \(X_3\) están conectados en el grafo, pero después del filtrado de términos significativos no comparten ningún término y 
+sus respectivas ecuaciones quedan como las siguientes: 
+\begin{align*}
+\frac{dX_0}{dt} &= 0.6 X_0 - 0.2 X_1^2, \\
+\frac{dX_3}{dt} &= -0.5 X_3 + 0.1 X_2 X_3.
+\end{align*}
+Entonces, para asegurar la representación dinámica de esa conexión, se incorpora el término \(X_0 X_3\) como representativo en ambas ecuaciones, que refleja la 
+interacción entre \(X_0\) y \(X_3\), en concordancia con la arista existente entre ellos en el grafo. De esta manera, se evita que la estructura topológica pierda 
+validez dinámica en el modelo.
+
+Este mecanismo garantiza que las conexiones entre compartimentos deben estar respaldadas por interacciones en las ecuaciones que reflejen adecuadamente los posibles 
+flujos o influencias entre ellos.
+
+El siguiente paso consiste en construir formalmente el sistema dinámico completo. Esta reconstrucción se realiza a partir de los elementos obtenidos hasta ahora: 
+los términos significativos entre las ecuaciones, las conexiones del grafo y los coeficientes ajustados. En la próxima sección se describe en detalle cómo se generan 
+las ecuaciones diferenciales a partir de estos componentes.
+
+\section{Construcción del Sistema Dinámico Basado en el Grafo}
+\label{sec:cons_sis}
+
+Despu\'es de seleccionados los términos significativos, se procede a construir el sistema dinámico definitivo, en el cual las ecuaciones de cada compartimento se ajustan 
+según la estructura topológica del grafo propuesto. Este proceso consta de tres etapas: la reconstrucción estructurada de las ecuaciones y el reajuste de coeficientes 
+en el nuevo modelo y la conversión del sistema en funciones computables que permitan calcular las derivadas en cada instante de tiempo como parte de una integración 
+diferencial mediante métodos numéricos.
+
+Para cada compartimento, se genera una ecuación que incluye únicamente aquellos términos derivados de interacciones con otros nodos a los que está conectado 
+directamente mediante una arista. La dirección de la arista influye directamente en la construcción de las ecuaciones: si el flujo va desde otro nodo hacia el 
+nodo actual, los términos asociados tienen coeficientes positivos, indicando una contribución entrante; en cambio, si la arista sale del nodo, los coeficientes 
+correspondientes son negativos, reflejando una pérdida o salida desde ese compartimento. Si el nodo \(X_1\) está conectado con \(X_0\) y \(X_2\) a través de las 
+aristas \(X_0 \rightarrow X_1\) y \(X_1 \rightarrow X_2\), entonces su ecuación podrá contener términos como \(+a X_0\), \(+b X_0 X_1\) y \(-c X_1\), \(-d X_1 X_2\). 
+Así, la ecuación de \(X_1\) podría tomar la forma:
+\[
+\frac{dX_1}{dt} = a X_0 + b X_0 X_1 - c X_1 - d X_1 X_2,
+\]
+donde los coeficientes \(a\), \(b\), \(c\), y \(d\) son positivos, y el signo con el que aparecen en la ecuación refleja si la interacción representa una ganancia 
+o una pérdida para el nodo \(X_1\).
+
+El modelo resultante mantiene así la consistencia estructural del grafo, en el sentido de que ningún nodo es influido por otros si no existe una conexión directa, 
+lo que proporciona interpretabilidad y transparencia a las interacciones modeladas.
+
+Tras la reconstrucci\'on de las ecuaciones, se realiza un nuevo ajuste de coeficientes mediante m\'etodos de m\'inimos cuadrados. Esta regresi\'on se aplica solo 
+sobre el subconjunto de t\'erminos seleccionados y permitidos por la topolog\'ia, a fin de refinar los par\'ametros y mejorar el ajuste a las derivadas observadas.
+Por ejemplo, si la ecuaci\'on de $X_1$ se reduce a $\dot{X}_1 = aX_0 - bX_1X_2$, los valores de $a$ y $b$ se recalculan para minimizar la diferencia entre la 
+derivada observada y la predicha. Este enfoque de selecci\'on seguida de reajuste se asemeja a t\'ecnicas como \textit{LASSO} \cite{Tibshirani1996} o regresi\'on 
+\textit{stepwise} \cite{Efroymson1960}, pero adaptado al contexto estructural impuesto por el grafo. As\'i se equilibra la interpretabilidad del modelo con su capacidad 
+predictiva.
+
+Un ejemplo de un grafo con tres nodos \(X_0\), \(X_1\), y \(X_2\), conectados mediante las aristas \(X_0 \rightarrow X_1\), \(X_1 \rightarrow X_2\), y 
+\(X_0 \rightarrow X_2\). Tras el proceso de selección, reconstrucción y reajuste de coeficientes descrito, las ecuaciones del sistema dinámico podrían 
+tomar la siguiente forma:
+\begin{align*}
+\frac{dX_0}{dt} &= -0.2 X_0 - 0.1 X_0 X_1 - 0.4 X_2, \\
+\frac{dX_1}{dt} &= 0.2 X_0 + 0.1 X_0 X_1 - 0.6 X_1 - 0.3 X_1 X_2, \\
+\frac{dX_2}{dt} &= 0.4 X_2 + 0.6 X_1 + 0.3 X_1 X_2.
+\end{align*}
+En este ejemplo, los signos reflejan la dirección del flujo: \(X_0\) pierde población hacia \(X_1\) y \(X_2\), lo que se refleja en términos negativos en su 
+ecuación. A su vez, \(X_1\) recibe flujo desde \(X_0\) y lo envía hacia \(X_2\), resultando en una combinación de términos positivos y negativos. Finalmente, 
+\(X_2\) actúa como sumidero en este grafo, acumulando los flujos entrantes desde \(X_0\) y \(X_1\).
+
+Una vez definidos los términos y reajustados sus coeficientes, las ecuaciones se convierten de su forma simbólica a funciones evaluables numéricamente. Esta conversión 
+es necesaria porque permite calcular el valor de las derivadas en cada instante de tiempo, lo cual es fundamental para poder integrar el sistema de ecuaciones y 
+comparar los resultados con los datos observados. Para la manipulación algebraica se utiliza la biblioteca \texttt{SymPy} \cite{SymPy2017}, y su función 
+\texttt{lambdify} permite transformar las expresiones simbólicas en funciones eficientes que pueden ser evaluadas directamente por algoritmos numéricos.
+
+El resultado es un sistema de ecuaciones diferenciales ordinarias que puede ser evaluado computacionalmente. Esta capacidad es clave para calcular el error cuadrático 
+medio (\textit{mean squared error}, MSE), el cual compara las soluciones del sistema con los datos reales. Dicho error se usa para asignar un puntaje de \textit{fitness} 
+al sistema de ecuaciones construido, cuantificando qué tan bien el modelo representado por el grafo de entrada logra reproducir la dinámica observada. A continuación, 
+se describe detalladamente este proceso de puntaje del \textit{fitness}.
+
+\section{Puntaje del \textit{Fitness}}
+\label{sec:punt_fit}
+
+Ya construidas las ecuaciones diferenciales para cada compartimento, se evalúa su capacidad para reproducir los datos observados. Este proceso se realiza mediante 
+integración numérica del sistema y posterior comparación entre las trayectorias simuladas y los datos originales. El resultado se expresa en un puntaje de 
+\textit{fitness} que guía el proceso evolutivo.
+
+El sistema de ecuaciones diferenciales se resuelve numéricamente utilizando la función \texttt{solve\_ivp} de la biblioteca \texttt{SciPy} \cite{Virtanen2020SciPy}. El método inicial empleado es 
+\texttt{RK45}.
+
+Una vez obtenidas las trayectorias simuladas, se calcula el error cuadrático medio (MSE) entre estas trayectorias y los datos originales. El MSE es especialmente 
+adecuado como métrica de comparación porque penaliza de manera más severa las grandes desviaciones, lo que lo convierte en una función objetivo sensible al ajuste
+y es ampliamente utilizado en problemas de regresión y ajuste de modelos \cite{Hastie2009, Bishop2006}.
+
+A este error base se le añaden penalizaciones que incorporan restricciones biológicas, estructurales y computacionales, con el fin de guiar el proceso hacia modelos 
+más plausibles. Las penalizaciones son las siguientes:
+
+\begin{itemize}
+    \item \textbf{No conservación de la población total:} Se penalizan soluciones en las que la población total varía, solo en caso de que el par\'ametro de 
+    esta penalizaci\'on sea activado, bajo la hipótesis de un sistema cerrado sin nacimientos ni migraciones. La penalización se calcula como la varianza de la 
+    masa total normalizada por el valor inicial:
+    \[
+    \text{penalización}_\text{masa} = \frac{\operatorname{Var}\left( \sum_i X_i(t) \right)}{\sum_i X_i(0)} \cdot \lambda_{\text{masa}}, \quad \lambda_{\text{masa}} = 10.
+    \]
+
+    \item \textbf{Presencia de valores negativos:} Se penaliza la aparición de poblaciones negativas, las cuales carecen de sentido físico. La penalización corresponde a la suma de los cuadrados de los valores negativos:
+    \[
+    \text{penalización}_\text{negativos} = \sum_{i,t} \min\left(X_i(t), 0\right)^2 \cdot \lambda_{\text{negativos}}, \quad \lambda_{\text{negativos}} = 5.
+    \]
+
+    \item \textbf{Complejidad estructural:} Se penaliza el número de aristas del grafo para favorecer modelos más simples. La penalización depende de la proporción cuadrática de aristas respecto al máximo posible:
+    \[
+    \text{penalización}_\text{estructura} = \text{MSE} \cdot \left(1 + \alpha \left( \frac{n_\text{aristas}}{n(n-1)} \right)^2 \right), \quad \alpha = 0.5.
+    \]
+
+    \item \textbf{Conectividad total del grafo:} Si el grafo tiene el número máximo de aristas dirigidas posibles, se aplica una penalización multiplicativa:
+    \[
+    \text{penalización}_\text{total} = \text{MSE} \cdot \beta, \quad \text{si } n_\text{aristas} = n(n-1), \quad \beta = 1.5.
+    \]
+\end{itemize}
+
+El puntaje de \textit{fitness} final se define como la suma del error cuadrático medio y las penalizaciones aplicadas. Este valor refleja cuán bien el modelo describe 
+los datos, considerando tanto precisión como simplicidad estructural. Un menor puntaje indica mejor desempeño.
+
+En este capítulo se presentó el procedimiento detallado para evaluar la calidad de un modelo compartimental representado por un grafo dirigido. Se describió cómo, a 
+partir de datos, se construyen ecuaciones diferenciales asociadas a cada compartimento mediante una combinación sistemática de términos polinomiales, 
+los cuales se filtran en función de su relevancia. Luego, se explicó cómo se reconstruyen las ecuaciones conforme a la topología del grafo y 
+cómo se ajustan los coeficientes de forma coherente con las direcciones del flujo. Finalmente, se definió una función de \textit{fitness} que cuantifica el grado de 
+ajuste del sistema dinámico a los datos observados, incorporando penalizaciones que reflejan restricciones estructurales, biológicas y computacionales. Esta función 
+actúa como el mecanismo de evaluación central para comparar distintas configuraciones de modelos compartimentales.
+
+Contando ya con un procedimiento que permite asignar un puntaje de \textit{fitness} a cualquier sistema de ecuaciones diferenciales generado a partir de un grafo 
+compartimental, el siguiente desafío consiste en explorar de manera eficiente el espacio de todos los posibles grafos que podrían representar la dinámica subyacente. 
+Este problema de búsqueda estructural es abordado en el próximo capítulo mediante un algoritmo genético, una técnica evolutiva inspirada en la selección natural. A 
+través de operadores como mutación, cruzamiento y selección, el algoritmo permite generar, modificar y evaluar poblaciones de grafos candidatos. El objetivo es 
+identificar automáticamente estructuras de modelos que modele los datos observados.

@@ -1,0 +1,24 @@
+\begin{conclusions}
+
+
+En esta tesis se desarrolló un sistema de identificación automática de modelos compartimentales descritos por ecuaciones diferenciales ordinarias (EDOs), mediante la aplicación de algoritmos genéticos sobre estructuras de grafos. El objetivo principal fue inferir la estructura y parámetros de sistemas compartimentales que mejor se ajusten a datos observados, partiendo únicamente de los valores temporales de las variables y sin conocimiento previo del modelo subyacente.
+
+Para lograr este objetivo, se diseñó una representación de sistemas compartimentales como grafos dirigidos, donde los nodos representan compartimentos y las aristas modelan las transiciones entre estos. Esta representación permitió explorar eficientemente el espacio de soluciones mediante operadores genéticos como mutación, cruzamiento y selección. Cada grafo se tradujo simbólicamente en un sistema de EDOs de tipo polinómico cuadrático con respecto a las variables, y los coeficientes se estimaron por mínimos cuadrados ordinarios utilizando derivadas aproximadas.
+
+El sistema propuesto fue evaluado utilizando datos sintéticos generados a partir de cuatro modelos compartimentales conocidos: SIR, SEIR, SIRD y SEIRV. Para cada uno de estos modelos se generaron múltiples conjuntos de datos con distintos niveles de ruido (5\,\%, 15\,\% y 30\,\%) y se aplicó el algoritmo genético para inferir tanto la estructura del grafo como las ecuaciones diferenciales correspondientes. Se realizaron múltiples ejecuciones por configuración experimental, permitiendo evaluar el comportamiento promedio y la robustez del sistema.
+
+Los resultados obtenidos indican que el sistema implementado es capaz de recuperar, en gran parte de los casos, grafos estructuralmente coherentes con los modelos originales y ecuaciones diferenciales que reproducen adecuadamente la dinámica observada en los datos. En particular, para los modelos SIR y SEIR, el algoritmo logra generar sistemas con valores de error cuadrático medio (MSE) muy bajos, y los grafos resultantes contienen las aristas esenciales del modelo original. Incluso en presencia de ruido moderado hasta 15\,\%, el sistema muestra una buena capacidad de generalización, manteniendo la calidad del ajuste.
+
+En el caso del modelo SIRD, que incorpora una formulación con términos fraccionarios, se observó que la aproximación mediante ecuaciones polinómicas cuadráticas tiene limitaciones inherentes. A pesar de no recuperar exactamente la forma original de las ecuaciones, el sistema fue capaz de aproximar dinámicas similares y preservar en muchos casos la estructura básica del grafo, por ejemplo, transiciones desde el compartimento de infecciosos hacia los de recuperados y fallecidos.
+
+El modelo SEIRV, al tener una mayor cantidad de compartimentos y una complejidad estructural superior, presentó un mayor desafío para el algoritmo. Los resultados muestran que el sistema no logra aproximar las trayectorias de las variables, especialmente en niveles bajos de ruido. Cabe señalar que, a medida que aumentan la dimensionalidad del sistema y el nivel de ruido, el algoritmo tiende a generar ecuaciones con más términos y grafos más complejos, como estrategia de compensación frente a la incertidumbre en los datos.
+
+Uno de los aspectos relevantes observados en los experimentos es que el valor del \textit{fitness} utilizado durante el proceso evolutivo no siempre coincide con el menor valor de MSE obtenido en validación. Esto se debe a que la función de evaluación incorpora penalizaciones estructurales, como el número de aristas del grafo y la presencia de términos con coeficientes poco significativos, priorizando soluciones más simples y parsimoniosas frente a aquellas que podrían ajustarse mejor numéricamente a los datos pero con estructuras más complejas.
+
+En cuanto a la eficiencia computacional, los tiempos de ejecución del algoritmo por experimento se mantuvieron en rangos razonables, entre 40 segundos y 9 minutos, considerando la naturaleza combinatoria del espacio de búsqueda y la necesidad de resolver integrales numéricas en cada evaluación. Esto demuestra la viabilidad práctica del enfoque para experimentación controlada, aunque se reconoce que la escalabilidad podría verse afectada ante una expansión considerable del número de compartimentos.
+
+En conclusión, el sistema diseñado cumple con los objetivos propuestos de forma satisfactoria, demostrando que es posible utilizar algoritmos genéticos combinados con representación simbólica y herramientas de álgebra computacional para inferir modelos compartimentales a partir de datos. El enfoque propuesto es flexible, extensible y adaptable a distintos escenarios epidemiológicos, y sienta las bases para desarrollos posteriores en el campo de la identificación automática de modelos dinámicos a partir de observaciones empíricas.
+
+A continuación se muestran algunas recomendaciones y posibles trabajos futuros.
+
+\end{conclusions}

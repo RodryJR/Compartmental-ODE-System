@@ -48,10 +48,50 @@ class CompartmentalGraphFitness:
         
         # Crear variables simbólicas para cada compartimento
         self.symbols = sp.symbols([f'X{i}' for i in range(self.n_compartments)])
-        
+
         # Calcular derivadas numéricas de los datos
         self.derivatives = self._calculate_derivatives()
-    
+
+        # Cache de las series temporales de cada término (Xi, Xi*Xj, ...).
+        # Los términos son constantes a lo largo de toda la búsqueda, así que se
+        # evalúan de forma vectorizada con numpy una sola vez en lugar de hacer
+        # term.subs() de sympy en cada punto de tiempo y cada evaluación.
+        self._ts_cache = {}
+
+        # Los pasos 1-3 del fitness (generar términos, ajustar coeficientes y
+        # podar) NO dependen del grafo evaluado, solo de los datos. Se calculan
+        # una sola vez y se reutilizan en todas las evaluaciones de la búsqueda.
+        self._pruned_equations_cache = None
+
+        # Cache de funciones numéricas por monomio (Xi, Xi*Xj, ...). Lambdify es
+        # caro (genera y compila código), así que cada monomio se compila una
+        # sola vez en lugar de lambdificar la ecuación completa en cada evaluación.
+        self._func_cache = {}
+
+    def _monomial_func(self, monomial: sp.Expr) -> callable:
+        """Devuelve la función numérica de un monomio, compilándola una sola vez."""
+        func = self._func_cache.get(monomial)
+        if func is None:
+            func = sp.lambdify(self.symbols, monomial, "numpy")
+            self._func_cache[monomial] = func
+        return func
+
+    def _get_pruned_equations(self) -> List[Dict[sp.Expr, float]]:
+        """
+        Devuelve las ecuaciones podadas (pasos 1-3), calculándolas una sola vez.
+
+        Generar los términos, ajustar sus coeficientes por mínimos cuadrados y
+        podar los insignificantes depende únicamente de los datos, no del grafo,
+        así que el resultado es idéntico en cada evaluación y se cachea.
+        """
+        if self._pruned_equations_cache is None:
+            expanded_equations = self._generate_expanded_equations()
+            coefficients = self._fit_coefficients(expanded_equations)
+            self._pruned_equations_cache = self._prune_insignificant_terms(
+                expanded_equations, coefficients
+            )
+        return self._pruned_equations_cache
+
     def _debug_print(self, message):
         """Imprime un mensaje de depuración si el modo debug está activado"""
         if self.debug:
@@ -92,15 +132,10 @@ class CompartmentalGraphFitness:
             # Guardar la estructura del grafo original para usarla más tarde
             self.original_edges = [(s, t) for s, t, _ in graph['edges']]
             
-            # Paso 1: Generar todos los posibles términos
-            expanded_equations = self._generate_expanded_equations()
-            
-            # Paso 2: Ajustar coeficientes iniciales
-            coefficients = self._fit_coefficients(expanded_equations)
-            
-            # Paso 3: Podar términos insignificantes
-            pruned_equations = self._prune_insignificant_terms(expanded_equations, coefficients)
-            
+            # Pasos 1-3: Generar términos, ajustar coeficientes y podar.
+            # No dependen del grafo, así que se calculan una sola vez (cacheado).
+            pruned_equations = self._get_pruned_equations()
+
             # Paso 4: Identificar términos compartidos
             shared_terms = self._identify_relevant_shared_terms(pruned_equations, graph)
             
@@ -165,15 +200,10 @@ class CompartmentalGraphFitness:
             # Guardar la estructura del grafo original para usarla más tarde
             self.original_edges = [(s, t) for s, t, _ in graph['edges']]
             
-            # Paso 1: Generar todos los posibles términos lineales y cuadráticos para cada nodo
-            expanded_equations = self._generate_expanded_equations()
-            
-            # Paso 2: Ajustar coeficientes para estos términos (normalizados entre 0 y 1)
-            coefficients = self._fit_coefficients(expanded_equations)
-            
-            # Paso 3: Podar términos insignificantes
-            pruned_equations = self._prune_insignificant_terms(expanded_equations, coefficients)
-            
+            # Pasos 1-3: Generar términos, ajustar coeficientes y podar.
+            # No dependen del grafo, así que se calculan una sola vez (cacheado).
+            pruned_equations = self._get_pruned_equations()
+
             # Paso 4: Identificar términos compartidos entre nodos conectados por aristas
             shared_terms = self._identify_relevant_shared_terms(pruned_equations, graph)
             
@@ -323,15 +353,11 @@ class CompartmentalGraphFitness:
         
         # Para cada compartimento
         for compartment in range(self.n_compartments):
-            # Construir la matriz de diseño X
-            X = np.zeros((len(self.derivatives), len(expanded_equations[compartment])))
-            
-            for t in range(len(self.derivatives)):
-                for j, term in enumerate(expanded_equations[compartment]):
-                    # Evaluar el término en el punto de tiempo t
-                    term_val = self._evaluate_term(term, self.data[t])
-                    X[t, j] = term_val
-            
+            # Construir la matriz de diseño X de forma vectorizada (columnas cacheadas)
+            X = np.column_stack([
+                self._term_timeseries(term) for term in expanded_equations[compartment]
+            ])
+
             # Vector de derivadas para este compartimento
             y = self.derivatives[:, compartment]
             
@@ -366,6 +392,29 @@ class CompartmentalGraphFitness:
         subs_dict = {self.symbols[i]: values[i] for i in range(self.n_compartments)}
         result = term.subs(subs_dict)
         return float(result)
+
+    def _term_timeseries(self, term: sp.Expr) -> np.ndarray:
+        """
+        Evalúa un término simbólico sobre toda la ventana temporal de datos de
+        forma vectorizada, devolviendo un vector de longitud len(self.derivatives).
+
+        El resultado se cachea: cada término único (Xi, Xi*Xj, ...) se compila
+        con sympy.lambdify una sola vez y se reutiliza en todas las evaluaciones
+        de fitness, evitando el coste de term.subs() en bucles anidados.
+        """
+        cached = self._ts_cache.get(term)
+        if cached is not None:
+            return cached
+
+        n = len(self.derivatives)
+        func = sp.lambdify(self.symbols, term, "numpy")
+        cols = [self.data[:n, k] for k in range(self.n_compartments)]
+        values = func(*cols)
+        # Un término constante (sin símbolos) devolvería un escalar; se difunde.
+        values = np.broadcast_to(np.asarray(values, dtype=float), (n,)).astype(float)
+
+        self._ts_cache[term] = values
+        return values
     
     def _prune_insignificant_terms(self, expanded_equations: List[List[sp.Expr]], 
                                   coefficients: List[np.ndarray]) -> List[Dict[sp.Expr, float]]:
@@ -544,8 +593,8 @@ class CompartmentalGraphFitness:
                 # Encontrar a qué columna de la matriz X pertenece este parámetro
                 col_idx = param_to_col[term_tuple]
                 
-                # Evaluar el término a lo largo del tiempo
-                term_values = np.array([self._evaluate_term(term, self.data[t]) for t in range(n_time_points)])
+                # Evaluar el término a lo largo del tiempo (vectorizado y cacheado)
+                term_values = self._term_timeseries(term)
                 
                 # Determinar el signo. El flujo sale del 'source' (-) y entra al 'target' (+)
                 source, target = context
@@ -601,13 +650,25 @@ class CompartmentalGraphFitness:
                     
             symbolic_equations[i] = equation_for_i
 
-        # El resto del método para convertir a función numérica no cambia
+        # Convertir cada ecuación a una lista de (coeficiente, función_del_monomio).
+        # Usamos los coeficientes ya combinados por sympy y compilamos cada monomio
+        # una sola vez (cacheado), evitando lambdificar la ecuación completa en
+        # cada evaluación —que era el principal coste tras la integración.
         try:
-            equation_funcs = [sp.lambdify(self.symbols, eq, "numpy") for eq in symbolic_equations]
+            compiled_equations = []  # una lista de (coef, func) por compartimento
+            for eq in symbolic_equations:
+                terms = []
+                for monomial, coeff in sp.sympify(eq).as_coefficients_dict().items():
+                    terms.append((float(coeff), self._monomial_func(monomial)))
+                compiled_equations.append(terms)
+
             def ode_system(t, y):
                 try:
                     y_safe = np.maximum(y, 0.0)
-                    dy_dt = [eq_func(*y_safe) for eq_func in equation_funcs]
+                    dy_dt = [
+                        sum(coeff * func(*y_safe) for coeff, func in terms)
+                        for terms in compiled_equations
+                    ]
                     for i in range(len(y)):
                         if y[i] < 1e-9 and dy_dt[i] < 0:
                             dy_dt[i] = 0.0
@@ -615,11 +676,11 @@ class CompartmentalGraphFitness:
                 except Exception as e:
                     self._debug_print(f"Error al evaluar el sistema de EDOs: {e}")
                     return [0] * self.n_compartments
-            
+
         except Exception as e:
             self._debug_print(f"Error al convertir ecuaciones simbólicas a funciones: {e}")
             def ode_system(t, y): return [0] * self.n_compartments
-                
+
         return ode_system, symbolic_equations
         
     
